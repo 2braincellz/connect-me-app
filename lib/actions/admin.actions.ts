@@ -5,7 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Profile, Session, Notification, Event, Enrollment, Meeting } from '@/types'
 import { getProfileWithProfileId } from './user.actions'
 import { addDays, format, parse, parseISO, isBefore, isAfter, setHours, setMinutes } from 'date-fns'; // Only use date-fns
-
+import {generateTempPassword} from '@/lib/utils'
 
 
 const supabase = createClientComponentClient({
@@ -81,40 +81,85 @@ export async function getAllProfiles(role:'Student'|'Tutor'|'Admin') {
   }
 }
 
-export const addStudent = async (studentData: Partial<Profile>): Promise<Profile> => {
+export const sendConfirmationEmail = async (email: string, tempPassword: string): Promise<void> => {
   const supabase = createClientComponentClient();
 
   try {
-    console.log(studentData)
+    const { error } = await supabase.auth.signUp({
+      email: email,
+      password: tempPassword,
+      options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+      }
+    });
+
+    console.log(email)
+
+    if (error) {
+      console.error('Error sending confirmation email:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in sendConfirmationEmail:', error);
+    throw error;
+  }
+};
+
+export const addStudent = async (studentData: Partial<Profile>): Promise<Profile> => {
+  const supabase = createClientComponentClient();
+  try {
     if (!studentData.email) {
       throw new Error('Email is required to create a student profile');
     }
 
-    const tempPassword = studentData.lastName || studentData.email + studentData.startDate
+    // Generate temp password
+    const tempPasswordInput = studentData?.lastName || studentData?.email + Date.now();
+    const tempPassword = await generateTempPassword(tempPasswordInput);
+    
+    console.log(tempPassword, 'PASSWORD');
+    
+    // Create user with email confirmation
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      email: studentData.email,
+      password: tempPassword,
+      options: {
+        data: {
+          role: 'Student',
+        },
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
 
-    console.log(tempPassword,'PASSWORD')
-
-    const userId = await createUser(studentData.email,tempPassword)
-
-    // Check if a user with this email already exists
-    const { data: existingUser, error: userCheckError } = await supabase
-      .from('Profiles')
-      .select('user_id')
-      .eq('email', studentData.email)
-      .single();
-
-    if (userCheckError && userCheckError.code !== 'PGRST116') {
-      // PGRST116 means no rows returned, which is what we want
-      throw userCheckError;
+    if (signUpError) {
+      console.error('Error in signup:', signUpError);
+      throw signUpError;
     }
 
-    if (existingUser) {
-      throw new Error('A user with this email already exists');
+    if (!authData.user?.id) {
+      throw new Error('No user ID returned from signup');
     }
 
-    // Create the student profile without id and createdAt
+    // If the email wasn't sent successfully, try resending it
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session) {
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: studentData.email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        }
+      });
+
+      if (resendError) {
+        console.error('Error resending confirmation:', resendError);
+      }
+    }
+
+    console.log('User created and confirmation email sent');
+
+    // Create the student profile
     const newStudentProfile = {
-      user_id: userId,
+      user_id: authData.user.id,
       role: 'Student',
       first_name: studentData.firstName || '',
       last_name: studentData.lastName || '',
@@ -127,51 +172,50 @@ export const addStudent = async (studentData: Partial<Profile>): Promise<Profile
       parent_email: studentData.parentEmail || '',
       timezone: studentData.timeZone || '',
       subjects_of_interest: studentData.subjectsOfInterest || [],
-      tutor_ids: [], // Changed from tutorIds to tutor_ids
+      tutor_ids: [],
       status: 'Active',
     };
 
-    // Add student profile to the database
     const { data: profileData, error: profileError } = await supabase
-      .from('Profiles') // Ensure 'profiles' is correctly cased
-      .insert(newStudentProfile)
-      .select('*');
+      .from('Profiles')
+      .insert([newStudentProfile])
+      .select('*')
+      .single();
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error('Error creating profile:', profileError);
+      throw profileError;
+    }
 
-    // Ensure profileData is defined and cast it to the correct type
     if (!profileData) {
       throw new Error('Profile data not returned after insertion');
     }
 
-    // Type assertion to ensure profileData is of type Profile
-    const createdProfile: any = profileData;
-
-    // Return the newly created profile data, including autogenerated fields
     return {
-      id: createdProfile.id, // Assuming 'id' is the generated key
-      createdAt: createdProfile.createdAt, // Assuming 'created_at' is the generated timestamp
-      userId: createdProfile.userId, // Adjust based on your schema
-      role: createdProfile.role,
-      firstName: createdProfile.firstName,
-      lastName: createdProfile.lastName,
-      dateOfBirth: createdProfile.dateOfBirth,
-      startDate: createdProfile.startDate,
-      availability: createdProfile.availability,
-      email: createdProfile.email,
-      parentName: createdProfile.parentName,
-      parentPhone: createdProfile.parentPhone,
-      parentEmail: createdProfile.parentEmail,
-      timeZone: createdProfile.timeZone,
-      subjectsOfInterest: createdProfile.subjectsOfInterest,
-      tutorIds: createdProfile.tutorIds,
-      status: createdProfile.status,
+      id: profileData.id,
+      createdAt: profileData.created_at,
+      userId: profileData.user_id,
+      role: profileData.role,
+      firstName: profileData.first_name,
+      lastName: profileData.last_name,
+      dateOfBirth: profileData.date_of_birth,
+      startDate: profileData.start_date,
+      availability: profileData.availability,
+      email: profileData.email,
+      parentName: profileData.parent_name,
+      parentPhone: profileData.parent_phone,
+      parentEmail: profileData.parent_email,
+      timeZone: profileData.timezone,
+      subjectsOfInterest: profileData.subjects_of_interest,
+      tutorIds: profileData.tutor_ids,
+      status: profileData.status,
     };
   } catch (error) {
     console.error('Error adding student:', error);
     throw error;
   }
 };
+
 
 export const addTutor = async (tutorData: Partial<Profile>): Promise<Profile> => {
 

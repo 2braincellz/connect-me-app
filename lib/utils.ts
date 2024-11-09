@@ -124,3 +124,16 @@ export function formatMilitaryToStandardTime(militaryTime:string) {
 
   return `${hours}:${minutes.toString().padStart(2, "0")}${period}`;
 }
+
+export async function generateTempPassword(input:string) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+
+  // Generate SHA-256 hash
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+  // Convert bytes to hex and take the first 8 characters for a shorter password
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex.substring(0, 8);  // Short, 8-character hashed password
+}
