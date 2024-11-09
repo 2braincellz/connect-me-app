@@ -7,7 +7,7 @@ import AvailabilityFormat from '@/components/student/AvailabilityFormat'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getProfile } from '@/lib/actions/user.actions';
-import { getAllProfiles, addStudent, deactivateUser,reactivateUser } from '@/lib/actions/admin.actions';
+import { getAllProfiles, addUser, deactivateUser,reactivateUser } from '@/lib/actions/admin.actions';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Profile } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -125,7 +125,7 @@ const StudentList = () => {
   const handleAddStudent = async () => {
     try {
       // Ensure addStudent returns a Profile
-      const addedStudent: Profile = await addStudent(newStudent);
+      const addedStudent: Profile = await addUser(newStudent,'Student');
   
       // Update local state
       setStudents(prevStudents => {

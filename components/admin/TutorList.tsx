@@ -8,7 +8,7 @@ import AvailabilityFormat from '@/components/student/AvailabilityFormat'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getProfile } from '@/lib/actions/user.actions';
-import { getAllProfiles, addTutor, deactivateUser, reactivateUser, getEvents, getEventsWithTutorMonth } from '@/lib/actions/admin.actions';
+import { getAllProfiles, addUser, deactivateUser, reactivateUser, getEvents, getEventsWithTutorMonth } from '@/lib/actions/admin.actions';
 import { getTutorSessions } from "@/lib/actions/tutor.actions";
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Profile, Session, Event } from '@/types';
@@ -131,7 +131,7 @@ const TutorList = () => {
   const handleAddTutor = async () => {
     try {
       // Ensure addStudent returns a Profile
-      const addedTutor: Profile = await addTutor(newTutor);
+      const addedTutor: Profile = await addUser(newTutor, 'Tutor');
   
       // Update local state
       setTutors(prevTutors => {
