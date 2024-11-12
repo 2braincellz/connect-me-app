@@ -156,17 +156,6 @@ export const addUser = async (profile: Partial<Profile>, role: string): Promise<
 
     console.log('User created and confirmation email sent');
 
-    //send reset password
-    // const {data: passwordData, error: resetErrorPassword} = await supabase.auth.resetPasswordForEmail(profile.email, 
-    //   {
-    //   redirectTo:`${window.location.origin}/set-password`,
-    // })
-
-    // if (resetErrorPassword) {
-    //   console.error('Error sending set password email:', resetErrorPassword);
-    //   throw resetErrorPassword;
-    // }
-
     // Create the student profile
     const newProfile = {
       user_id: authData.user.id,
@@ -267,10 +256,7 @@ export const createUser = async (email: string,password:string): Promise<string 
     // Call signUp to create a new user
     const { data, error } = await supabase.auth.signUp({
       email,
-      password,
-      options: {
-        emailRedirectTo: '${window.location.origin}/set-password}'
-      }
+      password
     });
 
     if (error) {
@@ -830,5 +816,3 @@ export const updateNotification = async (notificationId: string, status: 'Active
       throw new Error('Failed to update notification');
   }
 };
-
-
