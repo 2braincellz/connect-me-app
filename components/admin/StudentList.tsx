@@ -291,39 +291,39 @@ const StudentList = ({
               </Dialog>
               {/*Deactivate Student*/}
               <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="destructive">Deactivate Student</Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Select a Student to Deactivate</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <Label htmlFor="studentSelect" className="text-right">
-            Student
-          </Label>
-          <div className="relative">
-            <Combobox
-              list={students
-                .filter(student => student.status === 'Active')
-                .map(student => ({
-                  value: student.id,
-                  label: `${student.firstName} ${student.lastName}`
-                }))}
-              category="student"
-              onValueChange={setSelectedStudentId}
-            />
-          </div>
-        </div>
-        <Button 
-          onClick={handleDeactivateStudent} 
-          disabled={!selectedStudentId}
-          className="w-full"
-        >
-          Confirm Deactivation
-        </Button>
-      </DialogContent>
-    </Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="destructive">Deactivate Student</Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Select a Student to Deactivate</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <Label htmlFor="studentSelect" className="text-right">
+                      Student
+                    </Label>
+                    <div className="relative">
+                      <Combobox
+                        list={students
+                          .filter(student => student.status === 'Active')
+                          .map(student => ({
+                            value: student.id,
+                            label: `${student.firstName} ${student.lastName}`
+                          }))}
+                        category="student"
+                        onValueChange={setSelectedStudentId}
+                      />
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={handleDeactivateStudent} 
+                    disabled={!selectedStudentId}
+                    className="w-full"
+                  >
+                    Confirm Deactivation
+                  </Button>
+                </DialogContent>
+              </Dialog>
               {/*Reactivate Student*/}
               <Dialog open={isReactivateModalOpen} onOpenChange={setIsReactivateModalOpen}>
                 <DialogTrigger asChild>
