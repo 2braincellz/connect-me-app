@@ -28,11 +28,12 @@ interface Session {
   tutor: Profile | null;
   date: string;
   summary:string;
-  meetingId: string;
+  meeting?: Meeting | null;
   status: string;
 }
 
 interface Meeting {
+  name: string;
   id: string;
   createdAt: string;
   password: string,

@@ -3,6 +3,7 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Profile, Session } from '@/types'
 import { getProfileWithProfileId } from './user.actions'
+import { getMeeting } from './admin.actions'
 
 const supabase = createClientComponentClient({
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -45,7 +46,7 @@ export async function getTutorSessions(profileId: string, startDate?: string, en
     environment: session.environment,
     date: session.date,
     summary: session.summary,
-    meetingId: session.meeting_id,
+    meeting: await getMeeting(session.meeting_id),
     student: await getProfileWithProfileId(session.student_id),
     tutor: await getProfileWithProfileId(session.tutor_id),
     status: session.status
@@ -163,38 +164,13 @@ export async function addSessionNotes(sessionId: string, notes: string) {
   return data
 }
 
-export async function getTutorAvailability(tutorId: string) {
-  const { data, error } = await supabase
-    .from('tutor_availability')
-    .select('*')
-    .eq('tutor_id', tutorId)
 
-  if (error) throw error
-  return data
-}
 
-export async function updateTutorAvailability(tutorId: string, availabilityData: any) {
-  const { data, error } = await supabase
-    .from('tutor_availability')
-    .upsert({ tutor_id: tutorId, ...availabilityData })
-    .eq('tutor_id', tutorId)
 
-  if (error) throw error
-  return data
-}
-
-export async function getTutorResources() {
-  const { data, error } = await supabase
-    .from('tutor_resources')
-    .select('*')
-
-  if (error) throw error
-  return data
-}
 
 export async function logSessionAttendance(sessionId: string, attended: boolean) {
   const { data, error } = await supabase
-    .from('sessions')
+    .from('Sessions')
     .update({ attended: attended })
     .eq('id', sessionId)
     .single()

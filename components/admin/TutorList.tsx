@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import toast, { Toaster } from "react-hot-toast";
+import { Combobox } from '@/components/ui/combobox'
 
 const TutorList = () => {
   const supabase = createClientComponentClient();
@@ -348,20 +349,18 @@ const TutorList = () => {
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <Label htmlFor="tutorSelect" className="text-right">Tutor</Label>
-                    <Select onValueChange={setSelectedTutorId} value={selectedTutorId || ''}>
-                      <SelectTrigger id="tutorSelect">
-                        <SelectValue placeholder="Select a tutor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tutors.map((tutor) => (
-                            tutor.status === 'Active' && (
-                            <SelectItem key={tutor.id} value={tutor.id}>
-                                {tutor.firstName} {tutor.lastName}
-                            </SelectItem>
-                            )
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="relative">
+                      <Combobox
+                        list={tutors
+                          .filter(tutor => tutor.status === 'Active')
+                          .map(tutor => ({
+                            value: tutor.id,
+                            label: `${tutor.firstName} ${tutor.lastName}`
+                          }))}
+                        category="tutor"
+                        onValueChange={setSelectedTutorId}
+                      />
+                    </div>
                   </div>
                   <Button onClick={handleDeactivateTutor} disabled={!selectedTutorId}>
                     Confirm Deactivation
@@ -379,20 +378,18 @@ const TutorList = () => {
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <Label htmlFor="tutorSelect" className="text-right">Tutor</Label>
-                    <Select onValueChange={setSelectedTutorId} value={selectedTutorId || ''}>
-                      <SelectTrigger id="tutorSelect">
-                        <SelectValue placeholder="Select a tutor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tutors.map((tutor) => (
-                            tutor.status === 'Inactive' && (
-                            <SelectItem key={tutor.id} value={tutor.id}>
-                                {tutor.firstName} {tutor.lastName}
-                            </SelectItem>
-                            )
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="relative">
+                      <Combobox
+                        list={tutors
+                          .filter(tutor => tutor.status === 'Inactive')
+                          .map(tutor => ({
+                            value: tutor.id,
+                            label: `${tutor.firstName} ${tutor.lastName}`
+                          }))}
+                        category="tutor"
+                        onValueChange={setSelectedTutorId}
+                      />
+                    </div>
                   </div>
                   <Button onClick={handleReactivateTutor} disabled={!selectedTutorId}>
                     Confirm Reactivation

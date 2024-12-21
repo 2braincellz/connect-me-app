@@ -4,14 +4,18 @@ import { Bell, ChevronDown, Plus, Link as LinkIcon, Eye, ChevronsLeft, ChevronsR
 import StudentCalendar from './StudentCalendar';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getProfile } from '@/lib/actions/user.actions'
+import { updateSession } from '@/lib/actions/admin.actions'
 import { getStudentSessions, rescheduleSession } from '@/lib/actions/student.actions'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Session, Profile } from '@/types'
 import { formatSessionDate } from '@/lib/utils'
+import toast from "react-hot-toast";
 
 const StudentDashboard = () => {
   const supabase = createClientComponentClient();
@@ -26,6 +30,7 @@ const StudentDashboard = () => {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [selectedSessionDate, setSelectedSessionDate] = useState<string | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [sessionSummary, setSessionSummary] = useState<string | null>('')
 
   useEffect(() => {
     const getUserData = async () => {
@@ -98,6 +103,23 @@ const StudentDashboard = () => {
     }
   };
 
+  const handleUpdateSessionSummary = async (updatedSession:Session) => {
+    try {
+      await updateSession(updatedSession);
+      if (updatedSession) {
+        setSessions(paginatedSessions.map((e:Session) => 
+            e.id === updatedSession.id 
+            ? updatedSession 
+            : e) as Session[]);  // Explicitly cast as Enrollment[]
+      }
+      toast.success("Session updated successfully");
+      
+    } catch (error) {
+      console.error("Failed to update session:", error);
+      toast.error("Failed to update session");
+    }
+  }
+
   const paginatedSessions = filteredSessions.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
@@ -132,6 +154,7 @@ const StudentDashboard = () => {
               <TableHead>Location</TableHead>
               <TableHead>Meeting</TableHead>
               <TableHead className="w-[50px]"></TableHead>
+              <TableHead>Add Summary</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -144,9 +167,9 @@ const StudentDashboard = () => {
                 <TableCell>
                   {session.environment !== 'In-Person' && 
                     <>
-                    {session.meetingId ? (
+                    {session?.meeting?.meetingId ? (
                       <button 
-                        onClick={() => window.location.href = `/meeting/${session.meetingId}`}
+                        onClick={() => window.location.href = `/meeting/${session?.meeting?.meetingId}`}
                         className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
                       >
                         View
@@ -167,7 +190,7 @@ const StudentDashboard = () => {
                     </DialogTrigger>
                     <DialogContent >
                       <DialogHeader>
-                        <DialogTitle>Reschedule Session with {session.tutor?.firstName} {session.tutor?.lastName} on {formatSessionDate(session.date)}</DialogTitle>
+                        <DialogTitle>Reschedule Session with {selectedSession?.tutor?.firstName} {selectedSession?.tutor?.lastName} on {formatSessionDate(selectedSession?.date || '')}</DialogTitle>
                       </DialogHeader>
                       <div className="py-4 space-y-6">
                         <Input
@@ -185,6 +208,29 @@ const StudentDashboard = () => {
                       </div>
                     </DialogContent>
                   </Dialog>
+                </TableCell>
+                <TableCell>
+                  {!session.summary && session.status !== 'COMPLETE' && <div className="grid w-full gap-2">
+                    <Label>NOTE: Please send in your summary.</Label>
+                    <Textarea 
+                      onChange={(e) => {
+                        const newSummary = e.target.value;
+                        setSessionSummary(newSummary);
+                        if (selectedSession?.id) {
+                          const updatedSession: Session = { 
+                            ...selectedSession, 
+                            summary: newSummary 
+                          };
+                          handleUpdateSessionSummary(updatedSession);
+                        }
+                      }}
+                      placeholder="Type your message here." 
+                    />
+                    <Button>Send message</Button>
+                  </div>}
+                  {session.summary && <div className="grid w-full gap-2 text-sm">
+                    {session.summary}
+                  </div>}
                 </TableCell>
               </TableRow>
             ))}

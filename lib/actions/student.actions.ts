@@ -2,6 +2,7 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Profile, Session } from '@/types'
 import { getProfileWithProfileId } from './user.actions'
+import { getMeeting } from './admin.actions'
 
 const supabase = createClientComponentClient({
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -48,7 +49,7 @@ export async function getStudentSessions(profileId: string, startDate?: string, 
     environment: session.environment,
     date: session.date,
     summary: session.summary,
-    meetingId: session.meeting_id,
+    meeting: await getMeeting(session.meeting_id),
     status: session.status,
     student: await getProfileWithProfileId(session.student_id),
     tutor: await getProfileWithProfileId(session.tutor_id)

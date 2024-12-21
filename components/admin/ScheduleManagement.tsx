@@ -16,7 +16,8 @@ import {
   updateSession,
   getMeetings,
   getAllProfiles,
-  removeSession
+  removeSession,
+  getMeeting
 } from "@/lib/actions/admin.actions";
 import {
   getProfileWithProfileId
@@ -173,17 +174,17 @@ const Schedule = () => {
   };
 
   // Check if a meeting is available (not used in any complete/past session)
-  const isMeetingAvailable = (meetingId: string) => {
+  const isMeetingAvailable = (meeting: Meeting) => {
     try {
       const now = new Date();
       return !sessions.some(session => {
         // Skip sessions without dates or meeting IDs
-        if (!session?.date || !session?.meetingId) return false;
+        if (!session?.date || !session?.meeting) return false;
         
         try {
           const sessionEndTime = new Date(session.date);
           sessionEndTime.setHours(sessionEndTime.getHours() + 1.5);
-          return (session.status === 'Complete' || sessionEndTime < now) && session.meetingId === meetingId;
+          return (session.status === 'Complete' || sessionEndTime < now) && session.meeting.id === meeting.id;
         } catch (error) {
           console.error("Error processing session date:", error);
           return false;
@@ -277,23 +278,24 @@ const Schedule = () => {
                 <p className="text-sm mb-4 text-gray-500">{format(day, 'MMM d')}</p>
                 {getValidSessionsForDay(day).map(session => (
                     <Card 
+                      onClick={() => {
+                        setSelectedSession(session);
+                        setIsModalOpen(true);
+                      }}
                       key={session.id} 
-                      className={`mb-2 ${session.status === 'Complete' ? 'bg-green-500/10 border-2' : 'bg-white'}`}
+                      className={`hover:cursor-pointer hover:shadow-md mb-2 ${session.status === 'Complete' ? 'bg-green-500/10 border-2' : 'bg-white'}`}
                     >
                       <CardContent className="p-3">
-                        <p className="text-xs font-semibold">Tutor: {session.tutor?.firstName} {session.tutor?.lastName}</p>
-                        <p className="text-xs font-medium">Student: {session?.student?.firstName}</p>
-                        <p className="text-xs text-gray-500">{session.summary}</p>
+                        <p className="text-xs font-semibold">{session.tutor?.firstName} {session.tutor?.lastName}</p>
+                        <p className="text-xs font-normal">{session?.student?.firstName} {session?.student?.lastName}</p>
                         <p className="text-xs text-gray-500">{getSessionTimespan(session.date)}</p>
-                        {session.status && 
-                          <p className={`text-xs inline font-medium px-3 py-1 rounded-lg bg-gray-100 mt-1 ${session.status === 'Complete' ? 'bg-green-200' : ''}`}>{session.status}</p>
-                        }
-                        <div className={`text-xs font-medium px-3 py-1 rounded-lg mt-1 ${session.meetingId ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {session.meetingId ? 'Meeting Link' : 'No Meeting Link'}
+                        
+                        <div className={`text-xs font-medium px-2 py-1 rounded-lg mt-1 border ${session.meeting != null ? 'border-green-300 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {session?.meeting != null && session?.meeting.name != null ? session?.meeting.name  : 'No Meeting Link'}
                         </div>
                         
                         <Button 
-                          className="mt-2 w-full text-xs h-6" 
+                          className="hidden mt-2 w-full text-xs h-6" 
                           onClick={() => {
                             setSelectedSession(session);
                             setIsModalOpen(true);
@@ -404,20 +406,20 @@ const Schedule = () => {
               <div>
                 <Label>Meeting</Label>
                 <Select
-                  value={selectedSession.meetingId}
-                  onValueChange={(value) => setSelectedSession({...selectedSession, meetingId: value})}
+                  value={selectedSession?.meeting?.id || ''}
+                  onValueChange={async (value) => setSelectedSession({...selectedSession, meeting: await getMeeting(value)})}
                 >
                   <SelectTrigger>
                     <SelectValue>
-                      {selectedSession?.meetingId || 'Select a meeting'}
+                      {selectedSession?.meeting == null || 'Select a meeting'}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {meetings.map(meeting => (
                       <SelectItem key={meeting.id} value={meeting.id} className="flex items-center justify-between">
-                        <span>{meeting.password} - {meeting.id}</span>
+                        <span>{meeting.name} | {meeting.meetingId}</span>
                         <Circle 
-                          className={`w-2 h-2 ml-2 ${isMeetingAvailable(meeting.id) ? 'text-green-500' : 'text-red-500'} fill-current`}
+                          className={`w-2 h-2 ml-2 ${isMeetingAvailable(meeting) ? 'text-green-500' : 'text-red-500'} fill-current`}
                         />
                       </SelectItem>
                     ))}

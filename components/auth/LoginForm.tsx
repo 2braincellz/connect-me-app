@@ -75,19 +75,16 @@ export default function LoginForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 p-0 rounded-md">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-4 p-0 rounded-md">
         <FormField
           control={form.control}
           name="email"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Enter your email</FormLabel>
+            <FormItem className='w-full'>
+              <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="youremail@example.com" {...field} />
+                <Input placeholder="Enter your email address" {...field} />
               </FormControl>
-              <FormDescription>
-                Enter the email associated with your account.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -97,17 +94,25 @@ export default function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Enter your password</FormLabel>
+              <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="********" {...field} />
+                <Input type="password" placeholder="Enter your password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        <FormDescription>
+          Forgot Password
+        </FormDescription>
         <Button disabled={isLoading} type="submit" className='w-full bg-blue-400'>
           {isLoading ? 'Logging in...' : 'Login'}
         </Button>
+
+        <FormDescription>
+          Don&apos;t have an account? <Link href='/register'><b>Register</b></Link>
+        </FormDescription>
       </form>
       <Toaster/>
     </Form>

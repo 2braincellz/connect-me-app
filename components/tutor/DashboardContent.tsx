@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getProfile } from '@/lib/actions/user.actions'
+import { updateSession } from '@/lib/actions/admin.actions'
 import { getTutorSessions, rescheduleSession } from '@/lib/actions/tutor.actions'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Session, Profile } from '@/types'
@@ -107,6 +108,22 @@ const StudentDashboard = () => {
     }
   };
 
+  const handleStatusChange = async (updatedSession: Session) => {
+    try {
+      await updateSession(updatedSession);
+      if (updatedSession) {
+        setSessions(paginatedSessions.map((e:Session) => 
+            e.id === updatedSession.id 
+            ? updatedSession 
+            : e) as Session[]);  // Explicitly cast as Enrollment[]
+      }
+      toast.success("Session updated successfully");
+      
+    } catch (error) {
+      console.error("Failed to update session:", error);
+      toast.error("Failed to update session");
+    }
+};
 
 
   const paginatedSessions = filteredSessions.slice(
@@ -137,17 +154,42 @@ const StudentDashboard = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Mark Status</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Student</TableHead>
               <TableHead>Location</TableHead>
               <TableHead>Meeting</TableHead>
               <TableHead className="w-[50px]"></TableHead>
+              <TableHead>Request Substitute</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedSessions.map((session, index) => (
               <TableRow key={index} className={session.status === 'ACTIVE' ? '' : session.status === 'COMPLETE' ? 'bg-green-200 opacity-25 pointer-events-none' : session.status === 'RESCHEDULED' ? 'bg-red-100 opacity-25 pointer-events-none' : ''}>
+                <TableCell>
+                  <Select
+                    value={selectedSession?.status}
+                    onValueChange={(value) => {
+                      console.log("Selected value:", value); // Log the selected value
+                      if (value && selectedSession && 'id' in selectedSession) {
+                        const updatedSession: Session = { ...selectedSession, status: value };
+                        handleStatusChange(updatedSession);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue>
+                        {selectedSession?.status ? selectedSession.status : 'Select status'}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Complete">Complete</SelectItem>
+                      <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
                 <TableCell>{formatSessionDate(session.date)}</TableCell>
                 <TableCell className='font-medium'>Meeting with {session.student?.firstName} {session.student?.lastName}</TableCell>
                 <TableCell>{session.student?.firstName} {session.student?.lastName}</TableCell>
@@ -155,9 +197,9 @@ const StudentDashboard = () => {
                 <TableCell>
                   {session.environment !== 'In-Person' && 
                     <>
-                    {session.meetingId ? (
+                    {session?.meeting?.meetingId ? (
                       <button 
-                        onClick={() => window.location.href = `/meeting/${session.meetingId}`}
+                        onClick={() => window.location.href = `/meeting/${session?.meeting?.meetingId}`}
                         className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
                       >
                         View
@@ -178,7 +220,7 @@ const StudentDashboard = () => {
                     </DialogTrigger>
                     <DialogContent >
                       <DialogHeader>
-                        <DialogTitle>Reschedule Session with {session.student?.firstName} {session.student?.lastName} on {formatSessionDate(session.date)}</DialogTitle>
+                        <DialogTitle>Reschedule Session with {selectedSession?.student?.firstName} {selectedSession?.student?.lastName} on {formatSessionDate(selectedSession?.date || '')}</DialogTitle>
                       </DialogHeader>
                       <div className="py-4 space-y-6">
                         <Input
@@ -197,8 +239,6 @@ const StudentDashboard = () => {
                     </DialogContent>
                   </Dialog>
                 </TableCell>
-                {//? Added sub hotline
-                }
                 <TableCell>
                   <Button variant = "outline" onClick = {() => window.location.href = "https://forms.gle/AC4an7K6NSNumDwKA"}>Request a Sub</Button>
                 </TableCell>

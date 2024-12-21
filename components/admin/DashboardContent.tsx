@@ -146,9 +146,9 @@ const AdminDashboard = () => {
                 <TableCell>
                   {session.environment !== 'In-Person' && 
                     <>
-                    {session.meetingId ? (
+                    {session?.meeting?.meetingId ? (
                       <button 
-                        onClick={() => window.location.href = `/meeting/${session.meetingId}`}
+                        onClick={() => window.location.href = `/meeting/${session?.meeting?.meetingId}`}
                         className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
                       >
                         View

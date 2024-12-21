@@ -4,6 +4,7 @@ import { Bell, ChevronDown, Plus, Link as LinkIcon, Eye, ChevronsLeft, ChevronsR
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import AvailabilityFormat from '@/components/student/AvailabilityFormat'
+import { Combobox } from '@/components/ui/combobox'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getProfile } from '@/lib/actions/user.actions';
@@ -15,7 +16,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import toast, { Toaster } from "react-hot-toast";
 
-const StudentList = () => {
+const StudentList = ({ 
+  isOpen, 
+  onOpenChange, 
+  onDeactivate 
+}: { 
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+  students: Array<{ id: string; firstName: string; lastName: string; status: string }>
+  onDeactivate: (studentId: string) => void
+}) => {
   const supabase = createClientComponentClient();
   const [students, setStudents] = useState<Profile[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Profile[]>([]);
@@ -280,61 +290,63 @@ const StudentList = () => {
                 </DialogContent>
               </Dialog>
               {/*Deactivate Student*/}
-              <Dialog open={isDeactivateModalOpen} onOpenChange={setIsDeactivateModalOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="destructive">Deactivate Student</Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Select a Student to Deactivate</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <Label htmlFor="studentSelect" className="text-right">Student</Label>
-                    <Select onValueChange={setSelectedStudentId} value={selectedStudentId || ''}>
-                      <SelectTrigger id="studentSelect">
-                        <SelectValue placeholder="Select a student" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {students.map((student) => (
-                            student.status === 'Active' && (
-                            <SelectItem key={student.id} value={student.id}>
-                                {student.firstName} {student.lastName}
-                            </SelectItem>
-                            )
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button onClick={handleDeactivateStudent} disabled={!selectedStudentId}>
-                    Confirm Deactivation
-                  </Button>
-                </DialogContent>
-              </Dialog>
+              <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="destructive">Deactivate Student</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Select a Student to Deactivate</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <Label htmlFor="studentSelect" className="text-right">
+            Student
+          </Label>
+          <div className="relative">
+            <Combobox
+              list={students
+                .filter(student => student.status === 'Active')
+                .map(student => ({
+                  value: student.id,
+                  label: `${student.firstName} ${student.lastName}`
+                }))}
+              category="student"
+              onValueChange={setSelectedStudentId}
+            />
+          </div>
+        </div>
+        <Button 
+          onClick={handleDeactivateStudent} 
+          disabled={!selectedStudentId}
+          className="w-full"
+        >
+          Confirm Deactivation
+        </Button>
+      </DialogContent>
+    </Dialog>
               {/*Reactivate Student*/}
               <Dialog open={isReactivateModalOpen} onOpenChange={setIsReactivateModalOpen}>
                 <DialogTrigger asChild>
                   <Button className='bg-blue-500'>Reactivate Student</Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-md overflow-auto">
                   <DialogHeader>
                     <DialogTitle>Select a Student to Reactivate</DialogTitle>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <Label htmlFor="studentSelect" className="text-right">Student</Label>
-                    <Select onValueChange={setSelectedStudentId} value={selectedStudentId || ''}>
-                      <SelectTrigger id="studentSelect">
-                        <SelectValue placeholder="Select a student" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {students.map((student) => (
-                            student.status === 'Inactive' && (
-                            <SelectItem key={student.id} value={student.id}>
-                                {student.firstName} {student.lastName}
-                            </SelectItem>
-                            )
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="relative">
+                      <Combobox
+                        list={students
+                          .filter(student => student.status === 'Inactive')
+                          .map(student => ({
+                            value: student.id,
+                            label: `${student.firstName} ${student.lastName}`
+                          }))}
+                        category="student"
+                        onValueChange={setSelectedStudentId}
+                      />
+                    </div>
                   </div>
                   <Button onClick={handleReactivateStudent} disabled={!selectedStudentId}>
                     Confirm Reactivation
