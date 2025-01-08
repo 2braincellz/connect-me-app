@@ -208,7 +208,7 @@ const Schedule = () => {
 
         try {
           const sessionEndTime = new Date(session.date);
-          sessionEndTime.setHours(sessionEndTime.getHours() + 1.5);
+          sessionEndTime.setHours(sessionEndTime.getHours() + 1);
           return (
             (session.status === "Complete" || sessionEndTime < now) &&
             session.meeting.id === meeting.id

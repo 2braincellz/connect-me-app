@@ -175,15 +175,17 @@ const EnrollmentList = () => {
         `${enroll.availability[0].day} ${enroll.availability[0].endTime}`
       );
       console.log(now);
+      console.log(enroll.availability[0])
+      console.log(new_enrollment_date)
       return !enrollments.some((enrollment) => {
         // Skip sessions without dates or meeting IDs
-        if (!enrollment?.endDate || !enrollment?.meetingId) return false;
+        if (!enrollment?.startDate || !enrollment?.endDate || !enrollment?.meetingId) return false;
 
         try {
           const sessionEndTime = new Date(
             `${enrollment.availability[0].day}, ${enrollment.availability[0].endTime}`
           );
-          sessionEndTime.setHours(sessionEndTime.getHours() + 1.5);
+          sessionEndTime.setHours(sessionEndTime.getHours() + 1);
           return (
             sessionEndTime < new_enrollment_date &&
             enrollment.meetingId === meetingId
@@ -850,26 +852,6 @@ const EnrollmentList = () => {
                 <Label htmlFor="studentId" className="text-right">
                   Student
                 </Label>
-                {/* <Select
-                  name="studentId"
-                  value={selectedEnrollment.student?.id}
-                  onValueChange={(value) =>
-                    handleInputChange({
-                      target: { name: "studentId", value },
-                    } as any)
-                  }
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select a student" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {students.map((student) => (
-                      <SelectItem key={student.id} value={student.id}>
-                        {student.firstName} {student.lastName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select> */}
 
                 <Popover
                   open={openStudentOptions}
@@ -956,27 +938,6 @@ const EnrollmentList = () => {
                 <Label htmlFor="tutorId" className="text-right">
                   Tutor
                 </Label>
-                {/* <Select
-                  name="tutorId"
-                  value={selectedEnrollment.tutor?.id}
-                  onValueChange={(value) =>
-                    handleInputChange({
-                      target: { name: "tutorId", value },
-                    } as any)
-                  }
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select a tutor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tutors.map((tutor) => (
-                      <SelectItem key={tutor.id} value={tutor.id}>
-                        {tutor.firstName} {tutor.lastName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select> */}
-
                 <Popover
                   open={openTutorOptions}
                   onOpenChange={setOpentTutorOptions}
@@ -1154,56 +1115,6 @@ const EnrollmentList = () => {
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* <div>
-                <Label>Meeting Link</Label>
-                <Select
-                  name="meetingId"
-                  value={selectedEnrollment.meetingId}
-                  // onValueChange={(value) =>
-                  //   setSelectedEnrollment({
-                  //     ...selectedEnrollment,
-                  //     meetingId: value,
-                  //   })
-                  // }
-                  onValueChange={(value) =>
-                    handleInputChange({
-                      target: { name: "meetingId", value },
-                    } as any)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a meeting link">
-                      {selectedEnrollment.meetingId
-                        ? meetings.find(
-                            (meeting) =>
-                              meeting.id === selectedEnrollment.meetingId
-                          )?.name
-                        : "Select a meeting"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {meetings.map((meeting) => (
-                      <SelectItem
-                        key={meeting.id}
-                        value={meeting.id}
-                        className="flex items-center justify-between"
-                      >
-                        <span>
-                          {meeting.name} - {meeting.id}
-                        </span>
-                        <Circle
-                          className={`w-2 h-2 ml-2 ${
-                            isMeetingAvailable(meeting.id, selectedEnrollment)
-                              ? "text-green-500"
-                              : "text-red-500"
-                          } fill-current`}
-                        />
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div> */}
             </div>
           )}
           <Button onClick={handleUpdateEnrollment}>Update Enrollment</Button>
